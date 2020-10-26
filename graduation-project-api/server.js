@@ -1,0 +1,73 @@
+const express = require('express');
+const app = express();
+const mongoose = require('mongoose');
+const Teacher = require('./models/teacher');
+const Student = require('./models/student');
+const Class = require('./models/class');
+mongoose.connect('mongodb+srv://mhd:123@classes.8mkn9.mongodb.net/graduation?retryWrites=true&w=majority').then(res=>{app.listen(3000)}).catch(e=>{console.log(e)});
+
+
+//middleware :
+app.use(express.urlencoded({extended : false}));
+app.use(express.json());
+
+
+
+//routes
+
+app.post('/classes', (req,res)=>{
+    
+    const class1 = new Class({
+        className: 'Java',
+        students: [{
+            firstName:'mazen',
+            lastName:'al-samman',
+            id_number:'22312'
+        } ,{
+            firstName:'ahmad',
+            lastName:'al-khalid',
+            id_number:'12345'
+        },
+        {
+            firstName:'khaled',
+            lastName:'al-ahmad',
+            id_number:'12423'
+        } ],
+        history:[{
+            date: '26-10-2020',
+            students:['ahmad','mazen','khaled']
+        }]
+    });
+    
+
+    class1.save().then(response=>{ res.json(response)}).catch(e=>{res.status(400).json("error while saving the class data "+e)});
+
+    
+
+
+});
+
+
+app.post('/students', (req,res)=>{
+    
+    const std1 = new Student({
+        firstName: 'mazen',
+        lastName:'al-samman',
+        id_number:'212322',
+        password:'123',
+        faceID :'1923',
+        images:['asdffadff','adfadfwefk','adfasdfdsafadsf']
+
+    });
+
+    std1.save().then(response=>{ res.json(response)}).catch(e=>{res.status(400).json("error while saving the student data "+e)});
+
+    
+
+
+});
+
+
+
+
+
