@@ -14,6 +14,7 @@
     "nodemon": "^2.0.6"
   },
   "dependencies": {
+    "csurf": "^1.11.0",
     "express": "^4.17.1",
     "mongoose": "^5.10.10"
   }
