@@ -4,6 +4,10 @@ const mongoose = require('mongoose');
 const Teacher = require('./models/teacher');
 const Student = require('./models/student');
 const Class = require('./models/class');
+const cors = require('cors');
+app.use(cors());
+
+
 mongoose.connect('mongodb+srv://mhd:123@classes.8mkn9.mongodb.net/graduation?retryWrites=true&w=majority').then(res=>{app.listen(3000)}).catch(e=>{console.log(e)});
 
 
@@ -51,12 +55,12 @@ app.post('/classes', (req,res)=>{
 app.post('/students', (req,res)=>{
     
     const std1 = new Student({
-        firstName: 'mazen',
-        lastName:'al-samman',
-        id_number:'212322',
-        password:'123',
-        faceID :'1923',
-        images:['asdffadff','adfadfwefk','adfasdfdsafadsf']
+        firstName: req.body.firstName,
+        lastName:req.body.lastName,
+        id_number:req.body.id_number,
+        password:req.body.password,
+        faceID :req.body.faceID,
+        images: req.body.images
 
     });
 
