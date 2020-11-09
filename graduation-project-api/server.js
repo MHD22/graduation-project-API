@@ -22,6 +22,7 @@ app.use(function(req, res, next) {
   next();
 });
 
+
 //routes
 app.post('/classes', (req,res)=>{  
     const class1 = new Class({
@@ -64,8 +65,22 @@ app.post('/students', (req,res)=>{
 });
 
 app.get('/students' , (req , res) => {
-    res.end("Hello From API") ;
-});
+ 
+    Student.find({}, function(err, result) {
+        if (err) {
+          console.log(err);
+        } else {
+            result= result.map((std)=>{
+                let st = `${std.firstName} ${std.lastName}  |  ${std.id_number}`;
+                return st;
+            });
+            console.log(result);
+          res.json(result);
+        }
+      });
 
+
+
+});
 
 
