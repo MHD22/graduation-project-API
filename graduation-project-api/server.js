@@ -24,7 +24,50 @@ app.use(function(req, res, next) {
 
 
 //routes
-app.post('/classes', (req,res)=>{  
+app.post('/classes', (req,res)=>{
+  const arrStudents=[];
+  const idsArray= req.body.ids;
+  //get students 
+  let studentPromise = new Promise(function(myResolve, myReject) {
+    idsArray.forEach((element,ind) => {
+      Student.find({'id_number':element}, function(err,data){
+        if(err){
+          console.log(err," error while get students");
+        }
+        else{
+          const temp={
+            firstName: data[0].firstName,
+            lastName:data[0].lastName,
+            id_number: data[0].id_number
+          }
+          arrStudents.push(temp)
+        }
+  
+        
+      });
+      if(ind===idsArray.length-1){
+        if(idsArray.length>0){
+          myResolve("done")
+        }
+        else{
+          myReject('error .. empty students')
+        }
+      }
+    });
+    
+
+
+  }
+    );
+  studentPromise.then(d=>{
+    console.log( 'students Array ',arrStudents);
+  });
+  
+
+
+
+
+
     // const class1 = new Class({
     //     className: 'Java',
     //     students: [{
@@ -74,9 +117,9 @@ app.get('/students' , (req , res) => {
             result= result.map((std)=>{
                 // let st = `${std.firstName} ${std.lastName}  |  ${std.id_number}`;
                 let st = {
-                    'fname' : `${std.firstName} `,
+                    'fname' : `${std.firstName}`,
                     'lname' : `${std.lastName}` ,
-                    'id' : ` ${std.id_number}` ,
+                    'id' : `${std.id_number}` ,
                 }
                 return st;
             });
