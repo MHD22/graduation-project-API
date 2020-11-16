@@ -25,28 +25,29 @@ app.use(function(req, res, next) {
 
 //routes
 app.post('/classes', (req,res)=>{  
-    const class1 = new Class({
-        className: 'Java',
-        students: [{
-            firstName:'mazen',
-            lastName:'al-samman',
-            id_number:'22312'
-        } ,{
-            firstName:'ahmad',
-            lastName:'al-khalid',
-            id_number:'12345'
-        },
-        {
-            firstName:'khaled',
-            lastName:'al-ahmad',
-            id_number:'12423'
-        } ],
-        history:[{
-            date: '26-10-2020',
-            students:['ahmad','mazen','khaled']
-        }]
-    });
-    class1.save().then(response=>{ res.json(response)}).catch(e=>{res.status(400).json("error while saving the class data "+e)});
+    // const class1 = new Class({
+    //     className: 'Java',
+    //     students: [{
+    //         firstName:'mazen',
+    //         lastName:'al-samman',
+    //         id_number:'22312'
+    //     } ,{
+    //         firstName:'ahmad',
+    //         lastName:'al-khalid',
+    //         id_number:'12345'
+    //     },
+    //     {
+    //         firstName:'khaled',
+    //         lastName:'al-ahmad',
+    //         id_number:'12423'
+    //     } ],
+    //     history:[{
+    //         date: '26-10-2020',
+    //         students:['ahmad','mazen','khaled']
+    //     }]
+    // });
+    // class1.save().then(response=>{ res.json(response)}).catch(e=>{res.status(400).json("error while saving the class data "+e)});
+    console.log(req.body) ;
 });
 
 
@@ -71,7 +72,12 @@ app.get('/students' , (req , res) => {
           console.log(err);
         } else {
             result= result.map((std)=>{
-                let st = `${std.firstName} ${std.lastName}  |  ${std.id_number}`;
+                // let st = `${std.firstName} ${std.lastName}  |  ${std.id_number}`;
+                let st = {
+                    'fname' : `${std.firstName} `,
+                    'lname' : `${std.lastName}` ,
+                    'id' : ` ${std.id_number}` ,
+                }
                 return st;
             });
             console.log(result);
