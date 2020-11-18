@@ -8,7 +8,7 @@ const cors = require('cors');
 app.use(cors());
 
 
-mongoose.connect('mongodb+srv://mhd:123@classes.8mkn9.mongodb.net/graduation?retryWrites=true&w=majority').then(res=>{app.listen(3000)}).catch(e=>{console.log(e)});
+mongoose.connect('mongodb+srv://mazen:123@test.nt5v0.mongodb.net/graduation?retryWrites=true&w=majority').then(res=>{app.listen(3000)}).catch(e=>{console.log(e)});
 
 
 //middleware :
@@ -26,71 +26,26 @@ app.use(function(req, res, next) {
 //routes
 app.post('/classes', (req,res)=>{
   const arrStudents=[];
-  const idsArray= req.body.ids;
-  //get students 
-  let studentPromise = new Promise(function(myResolve, myReject) {
-    idsArray.forEach((element,ind) => {
-      Student.find({'id_number':element}, function(err,data){
-        if(err){
-          console.log(err," error while get students");
-        }
-        else{
-          const temp={
-            firstName: data[0].firstName,
-            lastName:data[0].lastName,
-            id_number: data[0].id_number
-          }
-          arrStudents.push(temp)
-        }
-  
-        
-      });
-      if(ind===idsArray.length-1){
-        if(idsArray.length>0){
-          myResolve("done")
-        }
-        else{
-          myReject('error .. empty students')
-        }
-      }
-    });
-    
+  console.log(req.body) ;
+  const idsArr = req.body.ids ;
+  const fnames = req.body.fnames ;
+  const lnames = req.body.lnames ;
 
-
+  for(let i = 0 ; i < idsArr.length ; i++){
+    let obj = {
+      firstName : fnames[i] ,
+      lastName : lnames[i],
+      id_number : idsArr[i]
+    }
+    arrStudents.push(obj) ;
   }
-    );
-  studentPromise.then(d=>{
-    console.log( 'students Array ',arrStudents);
-  });
   
-
-
-
-
-
-    // const class1 = new Class({
-    //     className: 'Java',
-    //     students: [{
-    //         firstName:'mazen',
-    //         lastName:'al-samman',
-    //         id_number:'22312'
-    //     } ,{
-    //         firstName:'ahmad',
-    //         lastName:'al-khalid',
-    //         id_number:'12345'
-    //     },
-    //     {
-    //         firstName:'khaled',
-    //         lastName:'al-ahmad',
-    //         id_number:'12423'
-    //     } ],
-    //     history:[{
-    //         date: '26-10-2020',
-    //         students:['ahmad','mazen','khaled']
-    //     }]
-    // });
-    // class1.save().then(response=>{ res.json(response)}).catch(e=>{res.status(400).json("error while saving the class data "+e)});
-    console.log(req.body) ;
+  const class1 = new Class({
+    className: req.body.className ,
+    students: arrStudents
+  });
+    console.log(class1);
+    class1.save().then(response=>{ res.json(response)}).catch(e=>{res.status(400).json("error while saving the class data "+e)});
 });
 
 
