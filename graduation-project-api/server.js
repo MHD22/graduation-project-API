@@ -24,6 +24,41 @@ app.use(function(req, res, next) {
 
 
 //routes
+
+//Teachers
+app.get('/teachers' , (req , res)=>{
+  Teacher.find({}, function(err, result) {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log(result);
+      res.json(result);
+    }
+  });
+});
+
+app.post('/teachers' , (req , res)=>{
+  const newTeacher = new Teacher({
+    firstName: req.body.firstName,
+    lastName: req.body.lastName,
+    id_number:req.body.id_number,
+    password:req.body.password,
+  });
+  newTeacher.save().then(response=>{ res.json(response)}).catch(e=>{res.status(400).json("error while saving the Teacher data "+e)});
+});
+
+//Classes
+app.get('/classes' , (req , res)=>{
+  Class.find({}, function(err, result) {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log(result);
+      res.json(result);
+    }
+  });
+})
+
 app.post('/classes', (req,res)=>{
   const arrStudents=[];
   console.log(req.body) ;
@@ -49,6 +84,8 @@ app.post('/classes', (req,res)=>{
 });
 
 
+
+//Students
 app.post('/students', (req,res)=>{
     console.log("Request : ") ;
     console.log(req.body) ;
@@ -82,9 +119,6 @@ app.get('/students' , (req , res) => {
           res.json(result);
         }
       });
-
-
-
 });
 
 
