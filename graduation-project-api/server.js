@@ -8,7 +8,7 @@ const cors = require('cors');
 app.use(cors());
 
 
-mongoose.connect('mongodb+srv://mazen:123@test.nt5v0.mongodb.net/graduation?retryWrites=true&w=majority').then(res=>{app.listen(3000)}).catch(e=>{console.log(e)});
+mongoose.connect('mongodb+srv://mhd:123@classes.8mkn9.mongodb.net/graduation?retryWrites=true&w=majority').then(res=>{app.listen(3000)}).catch(e=>{console.log(e)});
 
 
 //middleware :
@@ -26,10 +26,10 @@ app.use(function(req, res, next) {
 //routes
 
 //Teachers
-app.get('/teachers' , (req , res)=>{
-  Teacher.find({}, function(err, result) {
+app.post('/loginTeacher' , (req , res)=>{
+  Teacher.find({id_number:req.body.id,password:req.body.password}, function(err, result) {
     if (err) {
-      console.log(err);
+      console.log(err,"error while fetching teacher");
     } else {
       console.log(result);
       res.json(result);
