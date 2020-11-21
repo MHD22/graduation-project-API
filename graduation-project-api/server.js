@@ -8,7 +8,7 @@ const cors = require('cors');
 app.use(cors());
 
 
-mongoose.connect('mongodb+srv://mhd:123@classes.8mkn9.mongodb.net/graduation?retryWrites=true&w=majority').then(res=>{app.listen(3000)}).catch(e=>{console.log(e)});
+mongoose.connect('mongodb+srv://mazen:123@test.nt5v0.mongodb.net/graduation?retryWrites=true&w=majority').then(res=>{app.listen(3000)}).catch(e=>{console.log(e)});
 
 
 //middleware :
@@ -24,6 +24,18 @@ app.use(function(req, res, next) {
 
 
 //routes
+
+app.get('/teacherClasses' , (req , res) => {
+  const id = req.query.id ;
+  Class.find({teacher_id:`${id}`}, function(err, result) {
+    if (err) {
+      console.log(err,"error while Getting Classes");
+    } else {
+      console.log(result);
+      res.json(result);
+    }
+  });
+});
 
 //Teachers
 app.post('/loginTeacher' , (req , res)=>{
@@ -76,6 +88,7 @@ app.post('/classes', (req,res)=>{
   }
   
   const class1 = new Class({
+    teacher_id: req.body.teacherID ,
     className: req.body.className ,
     students: arrStudents
   });
