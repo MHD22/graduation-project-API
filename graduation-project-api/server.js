@@ -162,19 +162,21 @@ function createPersonHandler(req,res){
     let {studentData}= req.body;
     studentData=JSON.parse(studentData);
     let {firstName,id_number}=studentData;
-    let stName = firstName;
+    let stName = firstName + " | " + id_number;
     superagent.get(`http://localhost:3000/checkStudent/${id_number}`)
     .then(studentResponse=>{
       if(studentResponse.body){
         res.json("The Student Is Already Exist")
       }
       else {
+        res.json("Student Is Added Successfuly")
         let file = [].concat(req.files);    
         createPersonOnLuxand(stName,file)
         .then(result => {
     
             let personID = result.id;
             studentData.faceID=personID;
+            console.log(stName) ;
             addFaceToPerson(file[1],personID)
             .then(data =>{
     
@@ -186,7 +188,7 @@ function createPersonHandler(req,res){
                         let images = result.map(obj=> obj.url);
                         studentData.images=images;
                         createStudentRecord(studentData)
-                        .then(response=>{res.json("Student Is Added Successfuly")})
+                        .then()
                         .catch(e=>{res.status(400).json("error while saving the student data in the DB "+e)});   
                       })
                     
@@ -285,8 +287,7 @@ function connectTheDataBase(){
     mongoose.set('useFindAndModify', false);
     mongoose.set('useCreateIndex', true);
     mongoose.set( 'useUnifiedTopology', true );
-    return mongoose.connect(`mongodb+srv://${process.env.MONGO_USER}@test.nt5v0.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`)
-
+    return mongoose.connect(`mongodb+srv://${process.env.MONGO_USER}@university.5ijt6.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`)
 }
 
 
