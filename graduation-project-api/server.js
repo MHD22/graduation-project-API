@@ -8,10 +8,10 @@ const Student = require('./models/student');
 const Class = require('./models/class');
 const superagent = require('superagent');
 const cors = require('cors');
-var multer  = require('multer');
-var axios = require('axios');
-var FormData = require('form-data');
-var fs = require('fs');
+let multer  = require('multer');
+let axios = require('axios');
+let FormData = require('form-data');
+let fs = require('fs');
 require('dotenv').config();
 
 
@@ -31,14 +31,14 @@ app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
   next();
 });
-var upload = multer({ dest: 'uploads/' });
+let upload = multer({ dest: 'uploads/' });
 app.use(cors());
 
 
 
 //routes
 app.post('/createPerson',upload.array("image",3),createPersonHandler);
-
+app.post('/checkImage',upload.single('photo'),checkImageHandler)
 app.get('/teacherClasses' , (req , res) => {
   const id = req.query.id ;
   Class.find({teacher_id:`${id}`}, function(err, result) {
@@ -157,6 +157,34 @@ connectTheDataBase()
 
 
 //helper functions :
+function checkImageHandler(req,res){
+let img = req.file;
+console.log(img);
+let data = new FormData();
+data.append('photo', fs.createReadStream(img.path));
+
+let config = {
+  method: 'post',
+  url: 'https://api.luxand.cloud/photo/search',
+  headers: { 
+    'token': process.env.LUXAND_TOKEN, 
+    ...data.getHeaders()
+  },
+  data : data
+};
+
+axios(config)
+.then(function (response) {
+  console.log(response.data);
+  res.json(response.data)
+})
+.catch(function (error) {
+  console.log(error);
+});
+
+
+}
+
 function createPersonHandler(req,res){
     
     let {studentData}= req.body;
@@ -210,12 +238,12 @@ function createPersonHandler(req,res){
 function createPersonOnLuxand(stName,file){
 
 
-  var data = new FormData();
+  let data = new FormData();
   data.append('name', stName);
   data.append('photo', fs.createReadStream(file[0].path));
   data.append('store', '1');
 
-  var config = {
+  let config = {
     method: 'post',
     url: 'https://api.luxand.cloud/subject/v2',
     headers: { 
@@ -236,10 +264,10 @@ function createPersonOnLuxand(stName,file){
 
 function addFaceToPerson(file,id){
 
-  var data = new FormData();
+  let data = new FormData();
   data.append('photo', fs.createReadStream(file.path));
 
-  var config = {
+  let config = {
     method: 'post',
     url: `https://api.luxand.cloud/subject/${id}`,
     headers: { 
@@ -259,10 +287,10 @@ function addFaceToPerson(file,id){
 
 
 function listFacesOfPerson(file,id){
-  var data = new FormData();
+  let data = new FormData();
   data.append('photo', fs.createReadStream(file.path));
 
-  var config = {
+  let config = {
     method: 'get',
     url: `https://api.luxand.cloud/subject/${id}`,
     headers: { 
