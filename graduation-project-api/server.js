@@ -53,9 +53,6 @@ app.get('/teacherClasses', (req, res) => {
 app.get('/checkStudent/:id', isStudentExist);
 app.get('/checkTeacher/:id', isTeacherExist);
 
-app.post('/testRoute', upload.array("image", 3), (req, res) => {
-  res.json("test Passes..");
-})
 
 //Teachers
 app.post('/loginTeacher', (req, res) => {
@@ -94,8 +91,18 @@ app.get('/classes', (req, res) => {
     if (err) {
       console.log(err);
     } else {
-      console.log(result);
       res.json(result);
+    }
+  });
+})
+
+app.get('/classHistory/:className', (req, res) => {
+  let {className} = req.params;
+  Class.find({className}, function (err, result) {
+    if (err) {
+      console.log("error during get class history data",err);
+    } else {
+      res.json(result[0]);
     }
   });
 })
