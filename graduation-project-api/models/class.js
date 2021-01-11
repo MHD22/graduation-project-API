@@ -11,7 +11,7 @@ const classSchema = new Schema({
 
     }],
     history: [{
-        date: String, students:Array
+        date: String, students:Array , images:Array
     }]
 
 
