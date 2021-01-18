@@ -47,7 +47,7 @@ app.post('/createPerson', upload.array("image", 3), createPersonHandler);
 app.post('/checkImage', upload.single('photo'), checkImageHandler)
 app.get('/teacherClasses', teacherClassesHandler);
 app.get('/checkStudent/:id', isStudentExist);
-app.get('/checkTeacher/:id', isTeacherExist);
+app.get('/checkTeacher/:id/:email', isTeacherExist);
 app.post('/loginTeacher', loginTeacherHandler);
 app.post('/teachers', teachersHandler);
 app.post('/teacherRegister',teacherRegisterHandler);
@@ -185,7 +185,7 @@ function getClassesHandler(req, res) {
 function teachersHandler(req, res) {
   let { email, id_number } = req.body;
   console.log(email, id_number);
-  superagent.get(`http://localhost:3000/checkTeacher/${id_number}`)
+  superagent.get(`http://localhost:3000/checkTeacher/${id_number}/${email}`)
     .then(teachweResponse => {
       if (teachweResponse.body) {
         res.json("Teacher Is Already Exist.")
@@ -194,7 +194,7 @@ function teachersHandler(req, res) {
         let token = randomToken(6);
         let hashedToken = bcrypt.hashSync(token, salt);
         sendTokenByEmail(email,token);
-        res.json(hashedToken);
+        res.json('token:'+hashedToken);
 
       }
     })
@@ -212,7 +212,7 @@ function teacherRegisterHandler(req,res){
         .catch(e => { res.status(400).json("error while saving the Teacher data " + e) });
   }
   else{
-    res.status(555).json("Token is wrong.");
+    res.status(222).json("Token is wrong.");
   }
 }
 
@@ -497,9 +497,9 @@ function isStudentExist(req, res) {
 
 }
 function isTeacherExist(req, res) {
-  let id = req.params.id;
+  let {id,email} = req.params;
 
-  Teacher.find({ id_number: `${id}` }, function (err, result) {
+  Teacher.find({$or: [{id_number: `${id}`},{email:`${email}`}] }, function (err, result) {
     if (err) {
       res.status(404).send("error during check the teacher");
     }
