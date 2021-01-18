@@ -58,8 +58,7 @@ app.post("/history/:className", historyHandler);
 app.get('/students', getStudentsHandler);
 app.put('/editClass', editClassHandler);
 app.delete('/deleteClass', deleteClassHandler);
-
-
+app.get("/checkClass/:className", checkfoundclass)
 
 //test
 app.post('/email',(req,res)=>{
@@ -76,6 +75,18 @@ connectTheDataBase()
 
 
 //helper functions :
+
+function checkfoundclass(req , res){
+  let {className} = req.params;
+  Class.find({className}, function (err, result) {
+    if (err) {
+      res.json("Found")
+    } else {
+      res.json(result.length != 0) ;
+    }
+  });
+}
+
 function deleteClassHandler(req,res){
   let {className} = req.body;
   Class.deleteOne({ className }, function (err) {
