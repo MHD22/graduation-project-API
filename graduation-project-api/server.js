@@ -15,11 +15,9 @@ let fs = require('fs');
 require('dotenv').config();
 
 
-
 //App setup:
 const app = express();
 const PORT = process.env.PORT || 3000;
-
 
 
 //App middlewares :
@@ -35,79 +33,95 @@ let upload = multer({ dest: 'uploads/' });
 app.use(cors());
 
 
-
 //routes
 app.post('/createPerson', upload.array("image", 3), createPersonHandler);
 app.post('/checkImage', upload.single('photo'), checkImageHandler)
-app.get('/teacherClasses', (req, res) => {
-  const id = req.query.id;
-  Class.find({ teacher_id: `${id}` }, function (err, result) {
-    if (err) {
-      res.status(500).json("error while Getting Classes\n", err);
-    } else {
-      res.json(result);
-    }
-  });
-});
-
+app.get('/teacherClasses', teacherClassesHandler);
 app.get('/checkStudent/:id', isStudentExist);
 app.get('/checkTeacher/:id', isTeacherExist);
+app.post('/loginTeacher', loginTeacherHandler);
+app.post('/teachers', teachersHandler);
+app.get('/classes', getClassesHandler)
+app.get('/classHistory/:className', classHistoryHandler)
+app.post('/classes', postClassesHandler);
+app.post("/history/:className", historyHandler);
+app.get('/students', getStudentsHandler);
+app.put('/editClass', editClassHandler);
+app.delete('/deleteClass', deleteClassHandler)
 
 
-//Teachers
-app.post('/loginTeacher', (req, res) => {
-  Teacher.find({ id_number: req.body.id, password: req.body.password }, function (err, result) {
-    if (err) {
-      console.log(err, "error while fetching teacher");
-    } else {
-      res.json(result);
+// App connections:
+connectTheDataBase()
+  .then(res => {
+    runTheServer();
+  })
+  .catch(e => { console.log(e) });
+
+
+//helper functions :
+function deleteClassHandler(req,res){
+  let {className} = req.body;
+  Class.deleteOne({ className }, function (err) {
+    if(err){
+       console.log(" error while delete the class from DB..",e);
+       res.json(" error while delete the class from DB..",e);
+    }
+    else{
+      console.log("Successful deletion");
+      res.json("Successful deletion");
     }
   });
-});
+}
 
-app.post('/teachers', (req, res) => {
-  let { firstName, lastName, id_number, password } = req.body;
-  superagent.get(`http://localhost:3000/checkTeacher/${id_number}`)
-    .then(teachweResponse => {
-      if (teachweResponse.body) {
-        res.json("Teacher Is Already Exist.")
+function editClassHandler(req,res){
+  let {className,students} = req.body;
+  Class.find({ className: `${className}` }, function (err, result) {
+    if (err) {
+      res.status(404).send("Class not found ..!");
+    }
+    else {
+      if(result.length){
+        students=students.map(std=>{
+          let id_number = std.id;
+          let firstSpace = std.name.indexOf(' ');
+          let firstName = std.name.slice(0,firstSpace);
+          let lastName = std.name.slice(firstSpace+1);
+          return {firstName, lastName, id_number};
+
+        })
+        result[0].students = students;
+        result[0].save();
+        res.json(result[0]);
       }
-      else {
-        const newTeacher = new Teacher({ firstName, lastName, id_number, password });
-        newTeacher.save()
-          .then(response => { res.json("Teacher Added Successfully") })
-          .catch(e => { res.status(400).json("error while saving the Teacher data " + e) });
+      else{
+        res.json("Class Not Found !")
       }
-    })
-    .catch(e => { res.status(500).json("error within checking the teacher existance") });
+    }
+  })
+}
 
+function getStudentsHandler(req, res) {
 
-
-});
-
-//Classes
-app.get('/classes', (req, res) => {
-  Class.find({}, function (err, result) {
+  Student.find({}, function (err, result) {
     if (err) {
       console.log(err);
     } else {
+      result = result.map((std) => {
+        // let st = `${std.firstName} ${std.lastName}  |  ${std.id_number}`;
+        let st = {
+          'fname': `${std.firstName}`,
+          'lname': `${std.lastName}`,
+          'id': `${std.id_number}`,
+        }
+        return st;
+      });
+      console.log(result);
       res.json(result);
     }
   });
-})
+}
 
-app.get('/classHistory/:className', (req, res) => {
-  let {className} = req.params;
-  Class.find({className}, function (err, result) {
-    if (err) {
-      console.log("error during get class history data",err);
-    } else {
-      res.json(result[0]);
-    }
-  });
-})
-
-app.post('/classes', (req, res) => {
+function postClassesHandler(req, res) {
   const arrStudents = [];
   const idsArr = req.body.ids;
   const fnames = req.body.fnames;
@@ -128,44 +142,68 @@ app.post('/classes', (req, res) => {
     students: arrStudents
   });
   class1.save().then(response => { res.json(response) }).catch(e => { res.status(400).json("error while saving the class data " + e) });
-});
+}
 
-app.post("/history/:className", historyHandler);
-
-//Students
-app.get('/students', (req, res) => {
-
-  Student.find({}, function (err, result) {
+function getClassesHandler(req, res) {
+  Class.find({}, function (err, result) {
     if (err) {
       console.log(err);
     } else {
-      result = result.map((std) => {
-        // let st = `${std.firstName} ${std.lastName}  |  ${std.id_number}`;
-        let st = {
-          'fname': `${std.firstName}`,
-          'lname': `${std.lastName}`,
-          'id': `${std.id_number}`,
-        }
-        return st;
-      });
-      console.log(result);
       res.json(result);
     }
   });
-});
+}
 
+function teachersHandler(req, res) {
+  let { firstName, lastName, id_number, password } = req.body;
+  superagent.get(`http://localhost:3000/checkTeacher/${id_number}`)
+    .then(teachweResponse => {
+      if (teachweResponse.body) {
+        res.json("Teacher Is Already Exist.")
+      }
+      else {
+        const newTeacher = new Teacher({ firstName, lastName, id_number, password });
+        newTeacher.save()
+          .then(response => { res.json("Teacher Added Successfully") })
+          .catch(e => { res.status(400).json("error while saving the Teacher data " + e) });
+      }
+    })
+    .catch(e => { res.status(500).json("error within checking the teacher existance") });
+    
+}
 
+function loginTeacherHandler(req, res){
+  Teacher.find({ id_number: req.body.id, password: req.body.password }, function (err, result) {
+    if (err) {
+      console.log(err, "error while fetching teacher");
+    } else {
+      res.json(result);
+    }
+  });
+}
 
-// App connections:
-connectTheDataBase()
-  .then(res => {
-    runTheServer();
-  })
-  .catch(e => { console.log(e) });
+function teacherClassesHandler(req, res) {
+  const id = req.query.id;
+  Class.find({ teacher_id: `${id}` }, function (err, result) {
+    if (err) {
+      res.status(500).json("error while Getting Classes\n", err);
+    } else {
+      res.json(result);
+    }
+  });
+}
 
+function classHistoryHandler(req,res){
+  let {className} = req.params;
+  Class.find({className}, function (err, result) {
+    if (err) {
+      console.log("error during get class history data",err);
+    } else {
+      res.json(result[0]);
+    }
+  });
+}
 
-
-//helper functions :
 function historyHandler(req, res) {
   let className = req.params.className;
   Class.find({ className: `${className}` }, function (err, result) {
