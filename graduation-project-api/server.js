@@ -8,12 +8,21 @@ const Student = require('./models/student');
 const Class = require('./models/class');
 const superagent = require('superagent');
 const cors = require('cors');
-let multer = require('multer');
-let axios = require('axios');
-let FormData = require('form-data');
-let fs = require('fs');
+const multer = require('multer');
+const axios = require('axios');
+const FormData = require('form-data');
+const fs = require('fs');
 require('dotenv').config();
+const nodemailer = require('nodemailer');
+const randomToken = require('random-token').create('1234567890');
+const bcrypt = require('bcryptjs');
+const salt = bcrypt.genSaltSync(7);
 
+
+// var hash = bcrypt.hashSync("mazen", salt);
+// console.log(hash);
+// let result = bcrypt.compareSync("mazen", hash);
+// console.log(result);
 
 //App setup:
 const app = express();
@@ -38,18 +47,24 @@ app.post('/createPerson', upload.array("image", 3), createPersonHandler);
 app.post('/checkImage', upload.single('photo'), checkImageHandler)
 app.get('/teacherClasses', teacherClassesHandler);
 app.get('/checkStudent/:id', isStudentExist);
-app.get('/checkTeacher/:id', isTeacherExist);
+app.get('/checkTeacher/:id/:email', isTeacherExist);
 app.post('/loginTeacher', loginTeacherHandler);
 app.post('/teachers', teachersHandler);
+app.post('/teacherRegister',teacherRegisterHandler);
 app.get('/classes', getClassesHandler)
 app.get('/classHistory/:className', classHistoryHandler)
 app.post('/classes', postClassesHandler);
 app.post("/history/:className", historyHandler);
 app.get('/students', getStudentsHandler);
 app.put('/editClass', editClassHandler);
-app.delete('/deleteClass', deleteClassHandler)
+app.delete('/deleteClass', deleteClassHandler);
 app.get("/checkClass/:className", checkfoundclass)
 
+//test
+app.post('/email',(req,res)=>{
+  
+
+})
 
 // App connections:
 connectTheDataBase()
@@ -168,21 +183,67 @@ function getClassesHandler(req, res) {
 }
 
 function teachersHandler(req, res) {
-  let { firstName, lastName, id_number, password } = req.body;
-  superagent.get(`http://localhost:3000/checkTeacher/${id_number}`)
+  let { email, id_number } = req.body;
+  console.log(email, id_number);
+  superagent.get(`http://localhost:3000/checkTeacher/${id_number}/${email}`)
     .then(teachweResponse => {
       if (teachweResponse.body) {
         res.json("Teacher Is Already Exist.")
       }
       else {
-        const newTeacher = new Teacher({ firstName, lastName, id_number, password });
-        newTeacher.save()
-          .then(response => { res.json("Teacher Added Successfully") })
-          .catch(e => { res.status(400).json("error while saving the Teacher data " + e) });
+        let token = randomToken(6);
+        let hashedToken = bcrypt.hashSync(token, salt);
+        sendTokenByEmail(email,token);
+        res.json('token:'+hashedToken);
+
       }
     })
     .catch(e => { res.status(500).json("error within checking the teacher existance") });
     
+}
+
+function teacherRegisterHandler(req,res){
+  let { firstName, email, lastName, id_number, password, hashedToken, token } = req.body;
+  let isTokenMatch = bcrypt.compareSync(token, hashedToken);
+  if(isTokenMatch){
+    const newTeacher = new Teacher({ firstName, lastName, id_number, email, password });
+        newTeacher.save()
+        .then(response => { res.json("Teacher Added Successfully") })
+        .catch(e => { res.status(400).json("error while saving the Teacher data " + e) });
+  }
+  else{
+    res.status(222).json("Token is wrong.");
+  }
+}
+
+function sendTokenByEmail(email, token){
+  let flag = true;
+  let transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    auth: {
+      user: 'class.image.app@gmail.com',
+      pass: 'M123456789@'
+    }
+  });
+  let options={
+    from: 'class.image.app@gmail.com',
+    to: email,
+    subject: 'Account Varification.',
+    text: `Your access token is:${token} `
+  };
+  transporter.sendMail(options,(err,info)=>{
+    if(err){
+      console.log(`error while sending the token.. ${err}`);
+      flag= false;
+    }
+    else{
+      console.log("sent: ", info.response);
+      flag= true;
+    }
+  })
+
+  return flag;
 }
 
 function loginTeacherHandler(req, res){
@@ -436,9 +497,9 @@ function isStudentExist(req, res) {
 
 }
 function isTeacherExist(req, res) {
-  let id = req.params.id;
+  let {id,email} = req.params;
 
-  Teacher.find({ id_number: `${id}` }, function (err, result) {
+  Teacher.find({$or: [{id_number: `${id}`},{email:`${email}`}] }, function (err, result) {
     if (err) {
       res.status(404).send("error during check the teacher");
     }
