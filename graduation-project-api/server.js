@@ -88,8 +88,7 @@ function sendTokenStdHandler(req, res) {
         res.json("This ID Is Already Exist");
       }
       else {
-        // let token = randomToken(4);
-        let token = '1234';
+        let token = randomToken(4);
         let hashedToken = bcrypt.hashSync(token, salt);
         sendTokenByEmail(email, token);
         res.json(hashedToken);
@@ -104,8 +103,7 @@ function sendTokenHandler(req, res) {
   superagent.get(`http://localhost:3000/checkTeacher/${1}/${email}`)
     .then(teacherResponse => {
       if (teacherResponse.body) {
-        // let token = randomToken(4);
-        let token = '1234';
+        let token = randomToken(4);
         let hashedToken = bcrypt.hashSync(token, salt);
         sendTokenByEmail(email, token);
         res.json(hashedToken);
@@ -259,8 +257,7 @@ function teachersHandler(req, res) {
         res.json("Teacher Is Already Exist.")
       }
       else {
-        // let token = randomToken(4);
-        let token = '1234';
+        let token = randomToken(4);
         let hashedToken = bcrypt.hashSync(token, salt);
         sendTokenByEmail(email, token);
         res.json('token:' + hashedToken);
