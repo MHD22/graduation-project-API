@@ -416,13 +416,6 @@ function createPersonHandler(req, res) {
   if (isTokenMatch) {
     
     let stName = firstName + " | " + id_number;
-    // superagent.get(`http://localhost:3000/checkStudent/${id_number}`)
-    //   .then(studentResponse => {
-    //     //check body
-    //     if (studentResponse.body) {
-    //       res.json("The Student Is Already Exist")
-    //     }
-    // else {
     res.json("Student Is Added Successfuly")
     let file = [].concat(req.files);
     createPersonOnLuxand(stName, file)
