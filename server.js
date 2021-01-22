@@ -41,6 +41,7 @@ app.use(express.json());
 
 
 //routes
+app.get('/',getStudentsHandler);
 app.post('/createPerson', upload.array("image", 3), createPersonHandler);
 app.post('/checkImage', upload.single('photo'), checkImageHandler)
 app.get('/teacherClasses', teacherClassesHandler);
