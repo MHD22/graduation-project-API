@@ -545,7 +545,7 @@ function connectTheDataBase() {
   mongoose.set('useFindAndModify', false);
   mongoose.set('useCreateIndex', true);
   mongoose.set('useUnifiedTopology', true);
-  return mongoose.connect(`mongodb+srv://${process.env.MONGO_USER}@university.5ijt6.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`)
+  return mongoose.connect(process.env.MONGO_URL);
 }
 
 
