@@ -50,7 +50,7 @@ app.get('/checkStudent/:id', isStudentExist);
 app.get('/checkTeacher/:id/:email', isTeacherExist);
 app.post('/loginTeacher', loginTeacherHandler);
 app.post('/teachers', teachersHandler);
-app.post('/teacherRegister',teacherRegisterHandler);
+app.post('/teacherRegister', teacherRegisterHandler);
 app.get('/classes', getClassesHandler)
 app.get('/classHistory/:className', classHistoryHandler)
 app.post('/classes', postClassesHandler);
@@ -59,10 +59,13 @@ app.get('/students', getStudentsHandler);
 app.put('/editClass', editClassHandler);
 app.delete('/deleteClass', deleteClassHandler);
 app.get("/checkClass/:className", checkfoundclass)
+app.post("/sendToken", sendTokenHandler);
+app.post("/resetPass", resetPassHandler);
+app.post("/sendTokenStd", sendTokenStdHandler);
 
 //test
-app.post('/email',(req,res)=>{
-  
+app.post('/email', (req, res) => {
+
 
 })
 
@@ -75,53 +78,119 @@ connectTheDataBase()
 
 
 //helper functions :
+function sendTokenStdHandler(req, res) {
+  let { id } = req.body;
 
-function checkfoundclass(req , res){
-  let {className} = req.params;
-  Class.find({className}, function (err, result) {
+  let email = `${id}@zu.edu.jo`;
+  superagent.get(`http://localhost:3000/checkStudent/${id}`)
+    .then(stdResp => {
+      if (stdResp.body) {
+        res.json("This ID Is Already Exist");
+      }
+      else {
+        // let token = randomToken(4);
+        let token = '1234';
+        let hashedToken = bcrypt.hashSync(token, salt);
+        sendTokenByEmail(email, token);
+        res.json(hashedToken);
+      }
+    })
+    .catch(e => { res.status(555).json('error while checking student attendance.') })
+}
+
+function sendTokenHandler(req, res) {
+
+  let { email } = req.body;
+  superagent.get(`http://localhost:3000/checkTeacher/${1}/${email}`)
+    .then(teacherResponse => {
+      if (teacherResponse.body) {
+        // let token = randomToken(4);
+        let token = '1234';
+        let hashedToken = bcrypt.hashSync(token, salt);
+        sendTokenByEmail(email, token);
+        res.json(hashedToken);
+      }
+      else {
+        res.json("This email is not registered yet.");
+      }
+    })
+    .catch(e => { res.status(500).json("error within checking the teacher existance") });
+
+}
+
+function resetPassHandler(req, res) {
+  let { token, hashedToken, email, newPass } = req.body;
+  let isTokenMatch = bcrypt.compareSync(token, hashedToken);
+  if (isTokenMatch) {
+    Teacher.find({ email: `${email}` }, function (err, result) {
+      if (err) {
+        res.status(404).send("teacher not found (error) ..!");
+      }
+      else {
+        if (result.length) {
+          let hashedPass = bcrypt.hashSync(newPass, salt);
+          result[0].password = hashedPass;
+          result[0].save();
+          res.json('done');
+        }
+        else {
+          res.json("Teacher Not Found!");
+        }
+      }
+    })
+
+  }
+  else {
+    res.status(222).json("Token is wrong.");
+  }
+}
+
+function checkfoundclass(req, res) {
+  let { className } = req.params;
+  Class.find({ className }, function (err, result) {
     if (err) {
       res.json("Found")
     } else {
-      res.json(result.length != 0) ;
+      res.json(result.length != 0);
     }
   });
 }
 
-function deleteClassHandler(req,res){
-  let {className} = req.body;
+function deleteClassHandler(req, res) {
+  let { className } = req.body;
   Class.deleteOne({ className }, function (err) {
-    if(err){
-       console.log(" error while delete the class from DB..",e);
-       res.json(" error while delete the class from DB..",e);
+    if (err) {
+      console.log(" error while delete the class from DB..", e);
+      res.json(" error while delete the class from DB..", e);
     }
-    else{
+    else {
       console.log("Successful deletion");
       res.json("Successful deletion");
     }
   });
 }
 
-function editClassHandler(req,res){
-  let {className,students} = req.body;
+function editClassHandler(req, res) {
+  let { className, students } = req.body;
   Class.find({ className: `${className}` }, function (err, result) {
     if (err) {
       res.status(404).send("Class not found ..!");
     }
     else {
-      if(result.length){
-        students=students.map(std=>{
+      if (result.length) {
+        students = students.map(std => {
           let id_number = std.id;
           let firstSpace = std.name.indexOf(' ');
-          let firstName = std.name.slice(0,firstSpace);
-          let lastName = std.name.slice(firstSpace+1);
-          return {firstName, lastName, id_number};
+          let firstName = std.name.slice(0, firstSpace);
+          let lastName = std.name.slice(firstSpace + 1);
+          return { firstName, lastName, id_number };
 
         })
         result[0].students = students;
         result[0].save();
         res.json(result[0]);
       }
-      else{
+      else {
         res.json("Class Not Found !")
       }
     }
@@ -143,7 +212,7 @@ function getStudentsHandler(req, res) {
         }
         return st;
       });
-      console.log(result);
+      
       res.json(result);
     }
   });
@@ -184,39 +253,40 @@ function getClassesHandler(req, res) {
 
 function teachersHandler(req, res) {
   let { email, id_number } = req.body;
-  console.log(email, id_number);
   superagent.get(`http://localhost:3000/checkTeacher/${id_number}/${email}`)
     .then(teachweResponse => {
       if (teachweResponse.body) {
         res.json("Teacher Is Already Exist.")
       }
       else {
-        let token = randomToken(6);
+        // let token = randomToken(4);
+        let token = '1234';
         let hashedToken = bcrypt.hashSync(token, salt);
-        sendTokenByEmail(email,token);
-        res.json('token:'+hashedToken);
+        sendTokenByEmail(email, token);
+        res.json('token:' + hashedToken);
 
       }
     })
     .catch(e => { res.status(500).json("error within checking the teacher existance") });
-    
+
 }
 
-function teacherRegisterHandler(req,res){
+function teacherRegisterHandler(req, res) {
   let { firstName, email, lastName, id_number, password, hashedToken, token } = req.body;
   let isTokenMatch = bcrypt.compareSync(token, hashedToken);
-  if(isTokenMatch){
-    const newTeacher = new Teacher({ firstName, lastName, id_number, email, password });
-        newTeacher.save()
-        .then(response => { res.json("Teacher Added Successfully") })
-        .catch(e => { res.status(400).json("error while saving the Teacher data " + e) });
+  if (isTokenMatch) {
+    let hashedPass = bcrypt.hashSync(password, salt);
+    const newTeacher = new Teacher({ firstName, lastName, id_number, email, password:hashedPass });
+    newTeacher.save()
+      .then(response => { res.json("Teacher Added Successfully") })
+      .catch(e => { res.status(400).json("error while saving the Teacher data " + e) });
   }
-  else{
+  else {
     res.status(222).json("Token is wrong.");
   }
 }
 
-function sendTokenByEmail(email, token){
+function sendTokenByEmail(email, token) {
   let flag = true;
   let transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
@@ -226,32 +296,44 @@ function sendTokenByEmail(email, token){
       pass: 'M123456789@'
     }
   });
-  let options={
+  let options = {
     from: 'class.image.app@gmail.com',
     to: email,
-    subject: 'Account Varification.',
-    text: `Your access token is:${token} `
+    subject: 'Account Verification.',
+    html: `<h1>Account Verification</h1>
+    <h4 style="font-style: italic;">Your Access Token is:</h4>
+    <h2 style="color:maroon; font-style: italic;">${token}</h2>`
   };
-  transporter.sendMail(options,(err,info)=>{
-    if(err){
+  transporter.sendMail(options, (err, info) => {
+    if (err) {
       console.log(`error while sending the token.. ${err}`);
-      flag= false;
+      flag = false;
     }
-    else{
-      console.log("sent: ", info.response);
-      flag= true;
+    else {
+      flag = true;
     }
   })
 
   return flag;
 }
 
-function loginTeacherHandler(req, res){
-  Teacher.find({ id_number: req.body.id, password: req.body.password }, function (err, result) {
+function loginTeacherHandler(req, res) {
+  Teacher.find({ id_number: req.body.id}, function (err, result) {
     if (err) {
       console.log(err, "error while fetching teacher");
     } else {
-      res.json(result);
+      if(result.length){
+        let isPassMatch = bcrypt.compareSync(req.body.password, result[0].password);
+        if(isPassMatch){
+          res.json(result);
+        }
+        else{
+          res.json([]);
+        }
+      }
+      else{
+        res.json([]);
+      }
     }
   });
 }
@@ -267,11 +349,11 @@ function teacherClassesHandler(req, res) {
   });
 }
 
-function classHistoryHandler(req,res){
-  let {className} = req.params;
-  Class.find({className}, function (err, result) {
+function classHistoryHandler(req, res) {
+  let { className } = req.params;
+  Class.find({ className }, function (err, result) {
     if (err) {
-      console.log("error during get class history data",err);
+      console.log("error during get class history data", err);
     } else {
       res.json(result[0]);
     }
@@ -295,19 +377,16 @@ function historyHandler(req, res) {
         "students": ids,
         "images": imgs
       }
-      his.push(obj) ;
-      result[0].history = his ;
-      result[0].save() ;
-      console.log(his);
+      his.push(obj);
+      result[0].history = his;
+      result[0].save();
       res.json('Done');
     }
   })
-  console.log(className);
 }
 
 function checkImageHandler(req, res) {
   let img = req.file;
-  console.log(img);
   let data = new FormData();
   data.append('photo', fs.createReadStream(img.path));
 
@@ -323,7 +402,6 @@ function checkImageHandler(req, res) {
 
   axios(config)
     .then(function (response) {
-      console.log(response.data);
       res.json(response.data)
     })
     .catch(function (error) {
@@ -337,48 +415,55 @@ function createPersonHandler(req, res) {
 
   let { studentData } = req.body;
   studentData = JSON.parse(studentData);
-  let { firstName, id_number } = studentData;
-  let stName = firstName + " | " + id_number;
-  superagent.get(`http://localhost:3000/checkStudent/${id_number}`)
-    .then(studentResponse => {
-      if (studentResponse.body) {
-        res.json("The Student Is Already Exist")
-      }
-      else {
-        res.json("Student Is Added Successfuly")
-        let file = [].concat(req.files);
-        createPersonOnLuxand(stName, file)
-          .then(result => {
-
-            let personID = result.id;
-            studentData.faceID = personID;
-            console.log(stName);
-            addFaceToPerson(file[1], personID)
+  let { firstName, id_number, token, hashedToken } = studentData;
+  let isTokenMatch = bcrypt.compareSync(token, hashedToken);
+  if (isTokenMatch) {
+    
+    let stName = firstName + " | " + id_number;
+    // superagent.get(`http://localhost:3000/checkStudent/${id_number}`)
+    //   .then(studentResponse => {
+    //     //check body
+    //     if (studentResponse.body) {
+    //       res.json("The Student Is Already Exist")
+    //     }
+    // else {
+    res.json("Student Is Added Successfuly")
+    let file = [].concat(req.files);
+    createPersonOnLuxand(stName, file)
+      .then(result => {
+        let personID = result.id;
+        studentData.faceID = personID;
+        addFaceToPerson(file[1], personID)
+          .then(data => {
+  
+            addFaceToPerson(file[2], personID)
               .then(data => {
-
-                addFaceToPerson(file[2], personID)
-                  .then(data => {
-
-                    listFacesOfPerson(file[0], personID)
-                      .then(result => {
-                        let images = result.map(obj => obj.url);
-                        studentData.images = images;
-                        createStudentRecord(studentData)
-                          .then()
-                          .catch(e => { res.status(400).json("error while saving the student data in the DB " + e) });
-                      })
-
+  
+                listFacesOfPerson(file[0], personID)
+                  .then(result => {
+                    let images = result.map(obj => obj.url);
+                    studentData.images = images;
+                    createStudentRecord(studentData)
+                      .then()
+                      .catch(e => { res.status(400).json("error while saving the student data in the DB " + e) });
                   })
+  
               })
+          })
+  
+      })
+      .catch(error => {
+        console.log('error fetching (create person On API)', error);
+        res.status(400).json("The student doesn't created successfully!!")
+      })
 
-          })
-          .catch(error => {
-            console.log('error fetching (create person On API)', error);
-            res.status(400).json("The student doesn't created successfully!!")
-          })
-      }
-    })
-    .catch(error => { res.status(400).json("error while check the student") })
+  }
+  else{
+    res.json("Token is wrong.");
+  }
+  //   }
+  // })
+  // .catch(error => { res.status(400).json("error while check the student") })
 
 }
 
@@ -477,8 +562,8 @@ function runTheServer() {
 
 
 function createStudentRecord(studentData) {
-  let { firstName, lastName, id_number, password, faceID, images } = studentData;
-  const std1 = new Student({ firstName, lastName, id_number, password, faceID, images });
+  let { firstName, lastName, id_number, faceID, images } = studentData;
+  const std1 = new Student({ firstName, lastName, id_number, faceID, images });
   return std1.save()
 }
 
@@ -497,9 +582,9 @@ function isStudentExist(req, res) {
 
 }
 function isTeacherExist(req, res) {
-  let {id,email} = req.params;
+  let { id, email } = req.params;
 
-  Teacher.find({$or: [{id_number: `${id}`},{email:`${email}`}] }, function (err, result) {
+  Teacher.find({ $or: [{ id_number: `${id}` }, { email: `${email}` }] }, function (err, result) {
     if (err) {
       res.status(404).send("error during check the teacher");
     }
