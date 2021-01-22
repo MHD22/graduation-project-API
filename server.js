@@ -81,7 +81,7 @@ function sendTokenStdHandler(req, res) {
   let { id } = req.body;
 
   let email = `${id}@zu.edu.jo`;
-  superagent.get(`http://localhost:3000/checkStudent/${id}`)
+  superagent.get(`${process.env.BASE_URL}/checkStudent/${id}`)
     .then(stdResp => {
       if (stdResp.body) {
         res.json("This ID Is Already Exist");
@@ -99,7 +99,7 @@ function sendTokenStdHandler(req, res) {
 function sendTokenHandler(req, res) {
 
   let { email } = req.body;
-  superagent.get(`http://localhost:3000/checkTeacher/${1}/${email}`)
+  superagent.get(`${process.env.BASE_URL}/checkTeacher/${1}/${email}`)
     .then(teacherResponse => {
       if (teacherResponse.body) {
         let token = randomToken(4);
@@ -250,7 +250,7 @@ function getClassesHandler(req, res) {
 
 function teachersHandler(req, res) {
   let { email, id_number } = req.body;
-  superagent.get(`http://localhost:3000/checkTeacher/${id_number}/${email}`)
+  superagent.get(`${process.env.BASE_URL}/checkTeacher/${id_number}/${email}`)
     .then(teachweResponse => {
       if (teachweResponse.body) {
         res.json("Teacher Is Already Exist.")
