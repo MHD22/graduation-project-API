@@ -285,15 +285,16 @@ function teacherRegisterHandler(req, res) {
 function sendTokenByEmail(email, token) {
   let flag = true;
   let transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
+    host: "smtp-mail.outlook.com", // hostname
+    secureConnection: false, // TLS requires secureConnection to be false
+    port: 587, // port for secure SMTP
     auth: {
-      user: 'class.image.app@gmail.com',
-      pass: 'M123456789@'
+        user: 'class.image.app@outlook.com',
+        pass: 'Mm12345@'
     }
   });
   let options = {
-    from: 'class.image.app@gmail.com',
+    from: 'class.image.app@outlook.com',
     to: email,
     subject: 'Account Verification.',
     html: `<h1>Account Verification</h1>
