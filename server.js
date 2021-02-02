@@ -289,12 +289,12 @@ function sendTokenByEmail(email, token) {
     secureConnection: false, // TLS requires secureConnection to be false
     port: 587, // port for secure SMTP
     auth: {
-        user: 'class.image.app@outlook.com',
-        pass: 'Mm12345@'
+        user: 'class.image.web@outlook.com',
+        pass: 'classimage123'
     }
   });
   let options = {
-    from: 'class.image.app@outlook.com',
+    from: 'class.image.web@outlook.com',
     to: email,
     subject: 'Account Verification.',
     html: `<h1>Account Verification</h1>
